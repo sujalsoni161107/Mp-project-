@@ -1,0 +1,1221 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(MyApp());
+}
+
+// ================= MODEL =================
+
+class Item {
+  String name;
+  String category;
+  String location;
+  String description;
+  String type;
+  String date;
+  bool found;
+
+  Item({
+    required this.name,
+    required this.category,
+    required this.location,
+    required this.description,
+    required this.type,
+    required this.date,
+    this.found = false,
+  });
+}
+
+// ================= APP =================
+
+class MyApp extends StatelessWidget {
+  MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Lost & Found',
+      home: HomePage(),
+    );
+  }
+}
+
+// ================= HOME PAGE =================
+
+class HomePage extends StatefulWidget {
+  HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => HomePageState();
+}
+
+class HomePageState extends State<HomePage>
+    with SingleTickerProviderStateMixin {
+
+  List<Item> items = [
+    Item(
+      name: 'Black Wallet',
+      category: 'Accessories',
+      location: 'Library',
+      description: 'Black leather wallet',
+      type: 'Lost',
+      date: '18 Sep 2026',
+    ),
+
+    Item(
+      name: 'Blue Backpack',
+      category: 'Bags',
+      location: 'Canteen',
+      description: 'Blue college backpack',
+      type: 'Found',
+      date: '17 Sep 2026',
+    ),
+
+    Item(
+      name: 'Mathematics Book',
+      category: 'Books',
+      location: 'Classroom 204',
+      description: 'Engineering mathematics book',
+      type: 'Lost',
+      date: '16 Sep 2026',
+    ),
+  ];
+
+  int selectedIndex = 0;
+
+  late AnimationController animation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    animation = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 2),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    animation.dispose();
+    super.dispose();
+  }
+
+  // Add item
+  void addItem(Item item) {
+    setState(() {
+      items.insert(0, item);
+    });
+  }
+
+  // Delete item
+  void deleteItem(Item item) {
+    setState(() {
+      items.remove(item);
+    });
+  }
+
+  // Open items page
+  void openItems(String? type) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ItemsPage(
+          items: items,
+          type: type,
+          deleteItem: deleteItem,
+        ),
+      ),
+    ).then((value) {
+      setState(() {});
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+
+    int lost =
+        items.where((item) => item.type == 'Lost').length;
+
+    int found =
+        items.where((item) => item.type == 'Found').length;
+
+    return Scaffold(
+
+      // App Bar
+      appBar: AppBar(
+        centerTitle: true,
+
+        title: Text(
+          'Lost & Found',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+
+      // Body
+      body: Padding(
+        padding: EdgeInsets.all(16),
+
+        child: Column(
+          children: [
+
+            // Welcome box
+            AnimatedContainer(
+              duration: Duration(seconds: 1),
+
+              width: double.infinity,
+
+              padding: EdgeInsets.all(18),
+
+              decoration: BoxDecoration(
+                color: Colors.indigo.shade100,
+                borderRadius: BorderRadius.circular(18),
+              ),
+
+              child: Column(
+                children: [
+
+                  Icon(
+                    Icons.search,
+                    size: 40,
+                  ),
+
+                  SizedBox(height: 8),
+
+                  Text(
+                    'Find it. Report it. Return it.',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 15),
+
+            // Statistics
+            Row(
+              children: [
+
+                statBox(
+                  'Lost',
+                  lost,
+                  Colors.red,
+                ),
+
+                statBox(
+                  'Found',
+                  found,
+                  Colors.green,
+                ),
+              ],
+            ),
+
+            SizedBox(height: 12),
+
+            // Lost / Found buttons
+            Row(
+              children: [
+
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      openItems('Lost');
+                    },
+
+                    child: Text(
+                      'Lost Items',
+                    ),
+                  ),
+                ),
+
+                SizedBox(width: 10),
+
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      openItems('Found');
+                    },
+
+                    child: Text(
+                      'Found Items',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            SizedBox(height: 12),
+
+            // Animation
+            RotationTransition(
+              turns: animation,
+
+              child: Icon(
+                Icons.search,
+                size: 35,
+                color: Colors.indigo,
+              ),
+            ),
+
+            SizedBox(height: 8),
+
+            Text(
+              'Recently Added',
+              style: TextStyle(
+                fontSize: 19,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            SizedBox(height: 8),
+
+            // Item list
+            Expanded(
+              child: ListView.builder(
+                itemCount: items.length,
+
+                itemBuilder: (context, index) {
+
+                  Item item = items[index];
+
+                  return Card(
+                    child: ListTile(
+
+                      leading: CircleAvatar(
+                        child: Icon(
+                          item.type == 'Lost'
+                              ? Icons.search_off
+                              : Icons.check,
+                        ),
+                      ),
+
+                      title: Text(
+                        item.name,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+
+                      subtitle: Text(
+                        '${item.category} • ${item.location}',
+                      ),
+
+                      trailing: Text(
+                        item.found
+                            ? 'Found'
+                            : item.type,
+
+                        style: TextStyle(
+                          color: item.type == 'Lost'
+                              ? Colors.red
+                              : Colors.green,
+
+                          fontWeight:
+                          FontWeight.bold,
+                        ),
+                      ),
+
+                      onTap: () {
+
+                        Navigator.push(
+                          context,
+
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                DetailsPage(
+                                  item: item,
+
+                                  refresh: () {
+                                    setState(() {});
+                                  },
+                                ),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+
+      // Add button
+      floatingActionButton:
+      FloatingActionButton(
+        onPressed: () {
+
+          Navigator.push(
+            context,
+
+            MaterialPageRoute(
+              builder: (context) =>
+                  AddPage(
+                    addItem: addItem,
+                  ),
+            ),
+          );
+        },
+
+        child: Icon(Icons.add),
+      ),
+
+      // Bottom navigation
+      bottomNavigationBar:
+      NavigationBar(
+
+        selectedIndex:
+        selectedIndex,
+
+        onDestinationSelected:
+            (index) {
+
+          setState(() {
+            selectedIndex = index;
+          });
+
+          if (index == 1) {
+            openItems(null);
+          }
+        },
+
+        destinations: [
+
+          NavigationDestination(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+
+          NavigationDestination(
+            icon: Icon(Icons.list),
+            label: 'Items',
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Statistics box
+  Widget statBox(
+      String title,
+      int number,
+      Color color,
+      ) {
+
+    return Expanded(
+      child: Card(
+        child: Padding(
+          padding: EdgeInsets.all(10),
+
+          child: Column(
+            children: [
+
+              Text(title),
+
+              Text(
+                '$number',
+
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ================= ITEMS PAGE =================
+
+class ItemsPage extends StatefulWidget {
+
+  List<Item> items;
+  String? type;
+  Function(Item) deleteItem;
+
+  ItemsPage({
+    super.key,
+    required this.items,
+    required this.deleteItem,
+    this.type,
+  });
+
+  @override
+  State<ItemsPage> createState() =>
+      ItemsPageState();
+}
+
+class ItemsPageState
+    extends State<ItemsPage> {
+
+  String search = '';
+
+  @override
+  Widget build(BuildContext context) {
+
+    List<Item> list =
+    widget.items.where((item) {
+
+      bool typeMatch =
+          widget.type == null ||
+              item.type == widget.type;
+
+      bool searchMatch =
+          item.name
+              .toLowerCase()
+              .contains(search) ||
+              item.category
+                  .toLowerCase()
+                  .contains(search) ||
+              item.location
+                  .toLowerCase()
+                  .contains(search);
+
+      return typeMatch && searchMatch;
+
+    }).toList();
+
+    return Scaffold(
+
+      appBar: AppBar(
+        title: Text(
+          widget.type == null
+              ? 'All Items'
+              : '${widget.type} Items',
+        ),
+      ),
+
+      body: Padding(
+        padding: EdgeInsets.all(12),
+
+        child: Column(
+          children: [
+
+            // Search
+            TextField(
+              onChanged: (value) {
+
+                setState(() {
+                  search =
+                      value.toLowerCase();
+                });
+              },
+
+              decoration: InputDecoration(
+                labelText: 'Search Item',
+
+                prefixIcon:
+                Icon(Icons.search),
+
+                border:
+                OutlineInputBorder(),
+              ),
+            ),
+
+            SizedBox(height: 12),
+
+            // List
+            Expanded(
+              child: list.isEmpty
+
+                  ? Center(
+                child: Text(
+                  'No items found',
+                  style: TextStyle(
+                    fontSize: 18,
+                  ),
+                ),
+              )
+
+                  : ListView.builder(
+                itemCount:
+                list.length,
+
+                itemBuilder:
+                    (context, index) {
+
+                  Item item =
+                  list[index];
+
+                  return Card(
+                    child: ListTile(
+
+                      leading:
+                      CircleAvatar(
+                        child: Icon(
+                          item.type ==
+                              'Lost'
+                              ? Icons.search_off
+                              : Icons.check,
+                        ),
+                      ),
+
+                      title: Text(
+                        item.name,
+
+                        style:
+                        TextStyle(
+                          fontWeight:
+                          FontWeight.bold,
+                        ),
+                      ),
+
+                      subtitle: Text(
+                        '${item.category}\n'
+                            '${item.location}\n'
+                            '${item.date}',
+                      ),
+
+                      trailing:
+                      PopupMenuButton(
+
+                        onSelected:
+                            (value) {
+
+                          if (value ==
+                              'delete') {
+
+                            showDeleteDialog(
+                              item,
+                            );
+                          }
+
+                          if (value ==
+                              'found') {
+
+                            setState(() {
+
+                              item.found =
+                              true;
+
+                              item.type =
+                              'Found';
+                            });
+
+                            ScaffoldMessenger
+                                .of(
+                                context)
+                                .showSnackBar(
+                              SnackBar(
+                                content:
+                                Text(
+                                  'Item marked as Found',
+                                ),
+                              ),
+                            );
+                          }
+                        },
+
+                        itemBuilder:
+                            (context) => [
+
+                          PopupMenuItem(
+                            value:
+                            'found',
+
+                            child:
+                            Text(
+                              'Mark as Found',
+                            ),
+                          ),
+
+                          PopupMenuItem(
+                            value:
+                            'delete',
+
+                            child:
+                            Text(
+                              'Delete',
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      onTap: () {
+
+                        Navigator.push(
+                          context,
+
+                          MaterialPageRoute(
+                            builder:
+                                (context) =>
+                                DetailsPage(
+                                  item: item,
+
+                                  refresh: () {
+                                    setState(
+                                            () {});
+                                  },
+                                ),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+
+      // Add button
+      floatingActionButton:
+      FloatingActionButton(
+        onPressed: () {
+
+          Navigator.push(
+            context,
+
+            MaterialPageRoute(
+              builder: (context) =>
+                  AddPage(
+                    addItem: (item) {
+
+                      widget.items.insert(
+                        0,
+                        item,
+                      );
+
+                      setState(() {});
+                    },
+                  ),
+            ),
+          );
+        },
+
+        child: Icon(Icons.add),
+      ),
+    );
+  }
+
+  // Delete confirmation
+  void showDeleteDialog(Item item) {
+
+    showDialog(
+      context: context,
+
+      builder: (context) {
+
+        return AlertDialog(
+
+          title:
+          Text('Delete Item'),
+
+          content:
+          Text(
+            'Do you want to delete this item?',
+          ),
+
+          actions: [
+
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+
+              child:
+              Text('Cancel'),
+            ),
+
+            ElevatedButton(
+              onPressed: () {
+
+                widget.deleteItem(item);
+
+                setState(() {});
+
+                Navigator.pop(context);
+
+                ScaffoldMessenger
+                    .of(context)
+                    .showSnackBar(
+                  SnackBar(
+                    content:
+                    Text('Item deleted'),
+                  ),
+                );
+              },
+
+              child:
+              Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+// ================= ADD PAGE =================
+
+class AddPage extends StatefulWidget {
+
+  Function(Item) addItem;
+
+  AddPage({
+    super.key,
+    required this.addItem,
+  });
+
+  @override
+  State<AddPage> createState() =>
+      AddPageState();
+}
+
+class AddPageState
+    extends State<AddPage> {
+
+TextEditingController name =
+TextEditingController();
+
+TextEditingController location =
+TextEditingController();
+
+TextEditingController description =
+TextEditingController();
+
+String category = 'Accessories';
+String type = 'Lost';
+
+@override
+Widget build(BuildContext context) {
+
+return Scaffold(
+
+appBar: AppBar(
+title:
+Text('Add Item'),
+),
+
+body: SingleChildScrollView(
+
+padding:
+EdgeInsets.all(18),
+
+child: Column(
+children: [
+
+// Name
+TextField(
+controller: name,
+
+decoration:
+InputDecoration(
+labelText:
+'Item Name',
+
+hintText:
+'Example: Black Wallet',
+
+border:
+OutlineInputBorder(),
+),
+),
+
+SizedBox(height: 12),
+
+// Category
+DropdownButtonFormField<String>(
+
+value: category,
+
+decoration:
+InputDecoration(
+labelText:
+'Category',
+
+border:
+OutlineInputBorder(),
+),
+
+items: [
+
+'Accessories',
+'Bags',
+'Books',
+'Electronics',
+'Documents',
+'Other',
+
+].map((value) {
+
+return DropdownMenuItem(
+value: value,
+child: Text(value),
+);
+
+}).toList(),
+
+onChanged: (value) {
+
+setState(() {
+category =
+value!;
+});
+},
+),
+
+SizedBox(height: 12),
+
+// Location
+TextField(
+controller: location,
+
+decoration:
+InputDecoration(
+labelText:
+'Location',
+
+hintText:
+'Example: Library',
+
+border:
+OutlineInputBorder(),
+),
+),
+
+SizedBox(height: 12),
+
+// Description
+  TextField(
+    controller:
+    description,
+
+    maxLines: 3,
+
+    decoration:
+    InputDecoration(
+      labelText:
+      'Description',
+
+      border:
+      OutlineInputBorder(),
+    ),
+  ),
+
+  SizedBox(height: 12),
+
+  // Type
+  DropdownButtonFormField<String>(
+
+    value: type,
+
+    decoration:
+    InputDecoration(
+      labelText:
+      'Item Type',
+
+      border:
+      OutlineInputBorder(),
+    ),
+
+    items: [
+      'Lost',
+      'Found',
+    ].map((value) {
+
+      return DropdownMenuItem(
+        value: value,
+        child: Text(value),
+      );
+
+    }).toList(),
+
+    onChanged: (value) {
+
+      setState(() {
+        type =
+        value!;
+      });
+    },
+  ),
+
+  SizedBox(height: 20),
+
+  // Add button
+  SizedBox(
+    width:
+    double.infinity,
+
+    child:
+    ElevatedButton(
+
+      onPressed: () {
+
+        if (name.text.isEmpty ||
+            location.text.isEmpty) {
+
+          ScaffoldMessenger
+              .of(context)
+              .showSnackBar(
+            SnackBar(
+              content:
+              Text(
+                'Enter item name and location',
+              ),
+            ),
+          );
+
+          return;
+        }
+
+        Item item = Item(
+          name:
+          name.text,
+
+          category:
+          category,
+
+          location:
+          location.text,
+
+          description:
+          description.text,
+
+          type:
+          type,
+
+          date:
+          '22 Sep 2026',
+        );
+
+        widget.addItem(item);
+
+        Navigator.pop(context);
+
+        ScaffoldMessenger
+            .of(context)
+            .showSnackBar(
+          SnackBar(
+            content:
+            Text(
+              'Item added successfully',
+            ),
+          ),
+        );
+      },
+
+      child:
+      Text('Add Item'),
+    ),
+  ),
+],
+),
+),
+);
+}
+}
+
+// ================= DETAILS PAGE =================
+
+class DetailsPage extends StatefulWidget {
+
+  Item item;
+  VoidCallback refresh;
+
+  DetailsPage({
+    super.key,
+    required this.item,
+    required this.refresh,
+  });
+
+  @override
+  State<DetailsPage> createState() =>
+      DetailsPageState();
+}
+
+class DetailsPageState
+    extends State<DetailsPage> {
+
+  @override
+  Widget build(BuildContext context) {
+
+    Item item =
+        widget.item;
+
+    return Scaffold(
+
+      appBar: AppBar(
+        title:
+        Text('Item Details'),
+      ),
+
+      body: Padding(
+        padding:
+        EdgeInsets.all(20),
+
+        child: Column(
+          crossAxisAlignment:
+          CrossAxisAlignment.start,
+
+          children: [
+
+            Center(
+              child: Icon(
+                item.type == 'Lost'
+                    ? Icons.search_off
+                    : Icons.check_circle,
+
+                size: 70,
+
+                color:
+                Colors.indigo,
+              ),
+            ),
+
+            SizedBox(height: 20),
+
+            Center(
+              child: Text(
+                item.name,
+
+                style:
+                TextStyle(
+                  fontSize: 25,
+                  fontWeight:
+                  FontWeight.bold,
+                ),
+              ),
+            ),
+
+            SizedBox(height: 20),
+
+            Text(
+              'Category: ${item.category}',
+            ),
+
+            SizedBox(height: 8),
+
+            Text(
+              'Location: ${item.location}',
+            ),
+
+            SizedBox(height: 8),
+
+            Text(
+              'Date: ${item.date}',
+            ),
+
+            SizedBox(height: 8),
+
+            Text(
+              'Type: ${item.type}',
+            ),
+
+            SizedBox(height: 15),
+
+            Text(
+              'Description',
+              style:
+              TextStyle(
+                fontSize: 18,
+                fontWeight:
+                FontWeight.bold,
+              ),
+            ),
+
+            SizedBox(height: 5),
+
+            Text(
+              item.description,
+            ),
+
+            SizedBox(height: 25),
+
+            // Found button
+            if (!item.found)
+
+              SizedBox(
+                width:
+                double.infinity,
+
+                child:
+                ElevatedButton.icon(
+
+                  onPressed: () {
+
+                    setState(() {
+
+                      item.found =
+                      true;
+
+                      item.type =
+                      'Found';
+                    });
+
+                    widget.refresh();
+
+                    ScaffoldMessenger
+                        .of(context)
+                        .showSnackBar(
+                      SnackBar(
+                        content:
+                        Text(
+                          'Item marked as Found',
+                        ),
+                      ),
+                    );
+                  },
+
+                  icon:
+                  Icon(Icons.check),
+
+                  label:
+                  Text(
+                    'Mark as Found',
+                  ),
+                ),
+              ),
+
+            if (item.found)
+
+              Container(
+                width:
+                double.infinity,
+
+                padding:
+                EdgeInsets.all(15),
+
+                decoration:
+                BoxDecoration(
+                  color:
+                  Colors.green.shade100,
+
+                  borderRadius:
+                  BorderRadius.circular(12),
+                ),
+
+                child:
+                Center(
+                  child: Text(
+                    'This item is Found',
+
+                    style:
+                    TextStyle(
+                      color:
+                      Colors.green,
+
+                      fontWeight:
+                      FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}      
